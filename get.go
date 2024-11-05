@@ -8,7 +8,7 @@ import (
 	"net/url"
 )
 
-func get(addr string, headers map[string]string) ([]byte, error) {
+func Get(addr string, headers map[string]string) ([]byte, error) {
 	// Parse URL
 	parsedURL, err := url.Parse(addr)
 	if err != nil {
@@ -45,8 +45,6 @@ func get(addr string, headers map[string]string) ([]byte, error) {
 	req += "Connection: close \r\n"
 	req += "\r\n"
 
-	fmt.Printf("Request:\n%vResponse:\n", req)
-
 	// Send the request to the host
 	_, err = client.Write([]byte(req))
 	if err != nil {
@@ -59,6 +57,5 @@ func get(addr string, headers map[string]string) ([]byte, error) {
 		return []byte(nil), err
 	}
 
-	fmt.Println(string(res))
 	return res, nil
 }

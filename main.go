@@ -13,7 +13,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	get(os.Args[1], headers)
+	get(os.Args[1], make(map[string]string))
 }
 
 // Function to make error handling less repetitive

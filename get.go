@@ -8,7 +8,7 @@ import (
 	"net/url"
 )
 
-func get(addr string) {
+func get(addr string, headers map[string]string) {
 	// Parse URL
 	parsedURL, err := url.Parse(addr)
 	handle(err)
@@ -35,6 +35,11 @@ func get(addr string) {
 
 	req := "GET / HTTP/1.1\r\n"
 	req += fmt.Sprintf("Host: %s\r\n", parsedURL.Host)
+
+	for k, v := range headers {
+		req += fmt.Sprintf("%v: %v\r\n", k, v)
+	}
+
 	req += "Connection: close \r\n"
 	req += "\r\n"
 

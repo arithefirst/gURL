@@ -13,11 +13,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	get(os.Args[1], make(map[string]string))
-}
-
-// Function to make error handling less repetitive
-func handle(err error) {
+	_, err := get(os.Args[1], make(map[string]string))
 	if err != nil {
 		log.Fatalf("Error: %s", err.Error())
 	}

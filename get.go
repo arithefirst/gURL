@@ -8,13 +8,18 @@ import (
 	"net/url"
 )
 
-func get(addr string, headers map[string]string) {
+func get(addr string, headers map[string]string) ([]byte, error) {
 	// Parse URL
 	parsedURL, err := url.Parse(addr)
-	handle(err)
+	if err != nil {
+		return []byte(nil), err
+	}
 
 	// Make a TCP Connection on port 443
 	conn, err := net.Dial("tcp", parsedURL.Host+":443")
+	if err != nil {
+		return []byte(nil), err
+	}
 
 	// Create TLS connection
 	client := tls.Client(conn, &tls.Config{
@@ -22,10 +27,7 @@ func get(addr string, headers map[string]string) {
 	})
 
 	// Defer closing the connection
-	defer func(client *tls.Conn) {
-		err := client.Close()
-		handle(err)
-	}(client)
+	defer client.Close()
 
 	// Request Format:
 	// Protocol / HTTP/ver
@@ -47,9 +49,16 @@ func get(addr string, headers map[string]string) {
 
 	// Send the request to the host
 	_, err = client.Write([]byte(req))
-	handle(err)
+	if err != nil {
+		return []byte(nil), err
+	}
 
 	// Read the response and return to the user
 	res, err := io.ReadAll(client)
+	if err != nil {
+		return []byte(nil), err
+	}
+
 	fmt.Println(string(res))
+	return res, nil
 }

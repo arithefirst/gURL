@@ -1,22 +1,48 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
 )
 
-func main() {
-	// Make sure the URL is inputted
-	if len(os.Args) == 1 {
-		fmt.Println("Usage: gurl <target URL>")
+type Flags struct {
+	Url     string
+	Port    uint
+	Headers map[string]string
+}
+
+func CliFlags() Flags {
+	var returnFlags Flags
+
+	// Map the cli flags to the struct
+	flag.StringVar(&returnFlags.Url, "u", "", "URL to Request")
+	flag.UintVar(&returnFlags.Port, "p", 443, "Port to Use")
+	returnFlags.Headers = make(map[string]string)
+
+	// Parse flags
+	flag.Parse()
+
+	// Check to see if the URl is empty
+	if returnFlags.Url == "" {
+		fmt.Println("Usage: gurl -u <target URL>")
 		os.Exit(0)
 	}
 
-	res, err := Get(os.Args[1], make(map[string]string))
+	return returnFlags
+}
+
+func main() {
+	// Read CLI Flags
+	cliFlags := CliFlags()
+
+	// Pass to Get → get.go
+	res, err := Get(&cliFlags)
 	if err != nil {
 		log.Fatalf("Error: %s", err.Error())
 	}
 
-	fmt.Printf("Response:\n%v", res)
+	// Print the resposne
+	fmt.Printf("Response:\n%v", string(res))
 }

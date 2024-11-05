@@ -6,7 +6,14 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	res, err := Get("https://icanhazip.com", make(map[string]string))
+
+	testFlags := Flags{
+		Port:    443,
+		Url:     "https://icanhazip.com/",
+		Headers: make(map[string]string),
+	}
+
+	res, err := Get(&testFlags)
 	if err != nil {
 		t.Fatal("Test failed with unexpected error: ", err)
 	}

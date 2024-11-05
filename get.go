@@ -8,15 +8,15 @@ import (
 	"net/url"
 )
 
-func Get(addr string, headers map[string]string) ([]byte, error) {
+func Get(flags *Flags) ([]byte, error) {
 	// Parse URL
-	parsedURL, err := url.Parse(addr)
+	parsedURL, err := url.Parse(flags.Url)
 	if err != nil {
 		return []byte(nil), err
 	}
 
 	// Make a TCP Connection on port 443
-	conn, err := net.Dial("tcp", parsedURL.Host+":443")
+	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", parsedURL.Hostname(), flags.Port))
 	if err != nil {
 		return []byte(nil), err
 	}
@@ -38,7 +38,7 @@ func Get(addr string, headers map[string]string) ([]byte, error) {
 	req := "GET / HTTP/1.1\r\n"
 	req += fmt.Sprintf("Host: %s\r\n", parsedURL.Host)
 
-	for k, v := range headers {
+	for k, v := range flags.Headers {
 		req += fmt.Sprintf("%v: %v\r\n", k, v)
 	}
 

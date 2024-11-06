@@ -16,14 +16,24 @@ type Flags struct {
 func CliFlags() Flags {
 	var returnFlags Flags
 
-	// Map the cli flags to the struct
+	// Short Flags
 	flag.StringVar(&returnFlags.Url, "u", "", "URL to Request")
 	flag.BoolVar(&returnFlags.Version, "v", false, "Display version information")
+
+	// Long flags
+	flag.StringVar(&returnFlags.Url, "url", "", "URL to Request")
+	flag.BoolVar(&returnFlags.Version, "version", false, "Display version information")
 	returnFlags.Headers = make(map[string]string)
 
-	// Parse flags
-	flag.Parse()
+	// Custom help message for -h/--help
+	flag.Usage = func() {
+		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "Usage of %s:\n", os.Args[0])
+		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -h, --help      Display this Message\n")
+		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -u, --url       URL to Request\n")
+		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -v, --version   Display version information\n")
+	}
 
+	flag.Parse()
 	return returnFlags
 }
 
@@ -31,7 +41,7 @@ func main() {
 	// Read CLI Flags
 	cliFlags := CliFlags()
 
-	// Print version info if -v is set
+	// Print version info if -v/--version is set
 	if cliFlags.Version {
 		versionData := "Go URL by arithefirst\n"
 		versionData += "gURL Version beta+0.1\n"

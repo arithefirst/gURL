@@ -8,7 +8,6 @@ import (
 func TestGet(t *testing.T) {
 
 	testFlags := Flags{
-		Port:    443,
 		Url:     "https://icanhazip.com/",
 		Headers: make(map[string]string),
 	}

@@ -9,7 +9,6 @@ import (
 
 type Flags struct {
 	Url     string
-	Port    uint
 	Headers map[string]string
 }
 
@@ -18,7 +17,6 @@ func CliFlags() Flags {
 
 	// Map the cli flags to the struct
 	flag.StringVar(&returnFlags.Url, "u", "", "URL to Request")
-	flag.UintVar(&returnFlags.Port, "p", 443, "Port to Use")
 	returnFlags.Headers = make(map[string]string)
 
 	// Parse flags

@@ -15,16 +15,43 @@ func Get(flags *Flags) ([]byte, error) {
 		return []byte(nil), err
 	}
 
-	// Make a TCP Connection on port 443
-	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", parsedURL.Hostname(), flags.Port))
+	// If the URL was parsed w/o a protocol prepend "http://"
+	if parsedURL.Host == "" {
+		parsedURL, err = url.Parse("http://" + flags.Url)
+		if err != nil {
+			return []byte(nil), err
+		}
+	}
+
+	var host string
+	if parsedURL.Scheme == "http" && parsedURL.Port() == "" {
+		// HTTP on Port 80
+		host = parsedURL.Hostname()
+		host += ":80"
+	} else if parsedURL.Scheme == "https" && parsedURL.Port() == "" {
+		// HTTPS on Port 443
+		host = parsedURL.Hostname()
+		host += ":443"
+	} else {
+		// Otherwise use user specified port
+		host = parsedURL.Hostname() + ":" + parsedURL.Port()
+	}
+
+	// Make a TCP Connection
+	conn, err := net.Dial("tcp", host)
 	if err != nil {
 		return []byte(nil), err
 	}
 
-	// Create TLS connection
-	client := tls.Client(conn, &tls.Config{
-		ServerName: parsedURL.Hostname(),
-	})
+	// Use TLS if the request is HTTPS
+	var client net.Conn
+	if parsedURL.Scheme == "https" {
+		client = tls.Client(conn, &tls.Config{
+			ServerName: parsedURL.Hostname(),
+		})
+	} else {
+		client = conn
+	}
 
 	// Defer closing the connection
 	defer client.Close()
@@ -36,7 +63,7 @@ func Get(flags *Flags) ([]byte, error) {
 	// Connection Close/Keep Alive
 
 	req := "GET / HTTP/1.1\r\n"
-	req += fmt.Sprintf("Host: %s\r\n", parsedURL.Host)
+	req += fmt.Sprintf("Host: %s\r\n", host)
 
 	for k, v := range flags.Headers {
 		req += fmt.Sprintf("%v: %v\r\n", k, v)

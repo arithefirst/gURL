@@ -1,14 +1,31 @@
 package main
 
 import (
+	"fmt"
+	"log"
+	"net/http"
 	"regexp"
 	"testing"
 )
 
 func TestGet(t *testing.T) {
+	// Start testing webserver in a goroutine
+	go func() {
+		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			_, err := fmt.Fprint(w, `{"string":"Testing String","int":69420,"bool":true}`)
+			if err != nil {
+				log.Fatal(err)
+			}
+		})
+
+		err := http.ListenAndServe(":8080", nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	testFlags := Flags{
-		Url:     "https://icanhazip.com/",
+		Url:     "http://localhost:8080/",
 		Headers: make(map[string]string),
 	}
 
@@ -21,7 +38,8 @@ func TestGet(t *testing.T) {
 		t.Error("Test failed: Response too short (<100 char)")
 	}
 
-	matchHttps, err := regexp.MatchString(`[h,t,p,s]{4,5}\:\/\/`, string(res))
+	resStr := string(res)
+	matchHttps, err := regexp.MatchString(`[h,t,p,s]{4,5}\:\/\/`, resStr)
 	if err != nil {
 		t.Fatal("Regexp crashed with unexpected error: ", err)
 	} else if matchHttps {
@@ -29,10 +47,18 @@ func TestGet(t *testing.T) {
 	}
 
 	// Check for protocol version ex: HTTP/1.1
-	matchProtVer, err := regexp.MatchString(`HTTP\/\d\.\d \d{3} [A-Z]*`, string(res))
+	matchProtVer, err := regexp.MatchString(`HTTP\/\d\.\d \d{3} [A-Z]*`, resStr)
 	if err != nil {
 		t.Fatal("Regexp crashed with unexpected error: ", err)
 	} else if !matchProtVer {
 		t.Error("Test failed: Response does not contain protocol version")
 	}
+
+	matchResponse, err := regexp.MatchString(`\{"string":"Testing String","int":69420,"bool":true\}`, resStr)
+	if err != nil {
+		t.Fatal("Regexp crashed with unexpected error: ", err)
+	} else if !matchResponse {
+		t.Error("Test failed: Different response than expected (", resStr, ")")
+	}
+
 }

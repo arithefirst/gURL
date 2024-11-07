@@ -8,12 +8,14 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"strings"
 )
 
 type Flags struct {
-	Url     string
-	Version bool
-	Headers map[string]string
+	Url            string
+	Version        bool
+	ShowResHeaders bool
+	Headers        map[string]string
 }
 
 // CliFlags Parses CLI Flags
@@ -23,10 +25,12 @@ func CliFlags() Flags {
 	// Short Flags
 	flag.StringVar(&returnFlags.Url, "u", "", "URL to Request")
 	flag.BoolVar(&returnFlags.Version, "v", false, "Display version information")
+	flag.BoolVar(&returnFlags.ShowResHeaders, "sh", false, "Show response headers")
 
 	// Long flags
 	flag.StringVar(&returnFlags.Url, "url", "", "URL to Request")
 	flag.BoolVar(&returnFlags.Version, "version", false, "Display version information")
+	flag.BoolVar(&returnFlags.ShowResHeaders, "show-headers", false, "Show response headers")
 	returnFlags.Headers = make(map[string]string)
 
 	// Custom help message for -h/--help
@@ -35,6 +39,7 @@ func CliFlags() Flags {
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -h, --help      Display this Message\n")
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -u, --url       URL to Request\n")
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -v, --version   Display version information\n")
+		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -sh, --show-headers   Display version information\n")
 	}
 
 	flag.Parse()
@@ -97,7 +102,7 @@ func main() {
 	// Print version info if -v/--version is set
 	if cliFlags.Version {
 		versionData := "Go URL by arithefirst\n"
-		versionData += "gURL Version beta+0.1\n"
+		versionData += "gURL Version beta+0.2\n"
 		versionData += "---------------------\n"
 		versionData += "github.com/arithefirst/gurl\n"
 		fmt.Print(versionData)
@@ -116,6 +121,12 @@ func main() {
 		log.Fatalf("Error: %s", err.Error())
 	}
 
-	// Print the resposne
-	fmt.Printf("Response:\n%v", string(res))
+	if !cliFlags.ShowResHeaders {
+		// Print the response w/o headers
+		resStr := string(res)
+		fmt.Print(resStr[strings.Index(resStr, "\r\n\r\n")+4:])
+	} else {
+		// Print the response w/ headers
+		fmt.Print(string(res))
+	}
 }

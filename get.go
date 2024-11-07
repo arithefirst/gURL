@@ -34,13 +34,13 @@ func Get(flags *Flags) ([]byte, error) {
 	// Send the request to the host
 	_, err = client.Write([]byte(req))
 	if err != nil {
-		return []byte(nil), err
+		return nil, err
 	}
 
-	// Read & return the response
+	// Read the response and return to the user
 	res, err := io.ReadAll(client)
 	if err != nil {
-		return []byte(nil), err
+		return nil, err
 	}
 
 	return res, nil

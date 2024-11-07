@@ -1,9 +1,12 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"log"
+	"net"
+	"net/url"
 	"os"
 )
 
@@ -13,6 +16,7 @@ type Flags struct {
 	Headers map[string]string
 }
 
+// CliFlags Parses CLI Flags
 func CliFlags() Flags {
 	var returnFlags Flags
 
@@ -35,6 +39,55 @@ func CliFlags() Flags {
 
 	flag.Parse()
 	return returnFlags
+}
+
+// SetupRequest General setup that all request types will use
+func SetupRequest(flags *Flags) (net.Conn, string, error) {
+	// Parse URL
+	parsedURL, err := url.Parse(flags.Url)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// If the URL was parsed w/o a protocol prepend "http://"
+	if parsedURL.Host == "" {
+		parsedURL, err = url.Parse("http://" + flags.Url)
+		if err != nil {
+			return nil, "", err
+		}
+	}
+
+	var host string
+	if parsedURL.Scheme == "http" && parsedURL.Port() == "" {
+		// HTTP on Port 80
+		host = parsedURL.Hostname()
+		host += ":80"
+	} else if parsedURL.Scheme == "https" && parsedURL.Port() == "" {
+		// HTTPS on Port 443
+		host = parsedURL.Hostname()
+		host += ":443"
+	} else {
+		// Otherwise use user specified port
+		host = parsedURL.Hostname() + ":" + parsedURL.Port()
+	}
+
+	// Make a TCP Connection
+	conn, err := net.Dial("tcp", host)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// Use TLS if the request is HTTPS
+	var client net.Conn
+	if parsedURL.Scheme == "https" {
+		client = tls.Client(conn, &tls.Config{
+			ServerName: parsedURL.Hostname(),
+		})
+	} else {
+		client = conn
+	}
+
+	return client, host, nil
 }
 
 func main() {

@@ -28,7 +28,12 @@ func Get(flags *Flags) ([]byte, error) {
 		req += fmt.Sprintf("%v: %v\r\n", k, v)
 	}
 
-	req += "Connection: close \r\n"
+	if flags.KeepAlive {
+		req += "Connection: keep-alive \r\n"
+	} else {
+		req += "Connection: close \r\n"
+	}
+
 	req += "\r\n"
 
 	// Send the request to the host

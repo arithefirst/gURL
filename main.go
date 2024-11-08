@@ -15,6 +15,7 @@ type Flags struct {
 	Url            string
 	Version        bool
 	ShowResHeaders bool
+	KeepAlive      bool
 	Headers        map[string]string
 }
 
@@ -26,20 +27,23 @@ func CliFlags() Flags {
 	flag.StringVar(&returnFlags.Url, "u", "", "URL to Request")
 	flag.BoolVar(&returnFlags.Version, "v", false, "Display version information")
 	flag.BoolVar(&returnFlags.ShowResHeaders, "sh", false, "Show response headers")
+	flag.BoolVar(&returnFlags.KeepAlive, "k", false, "Set connection to \"keep-alive\"")
 
 	// Long flags
 	flag.StringVar(&returnFlags.Url, "url", "", "URL to Request")
 	flag.BoolVar(&returnFlags.Version, "version", false, "Display version information")
 	flag.BoolVar(&returnFlags.ShowResHeaders, "show-headers", false, "Show response headers")
+	flag.BoolVar(&returnFlags.KeepAlive, "keepalive", false, "Set connection to \"keep-alive\"")
 	returnFlags.Headers = make(map[string]string)
 
 	// Custom help message for -h/--help
 	flag.Usage = func() {
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "Usage of %s:\n", os.Args[0])
-		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -h, --help      Display this Message\n")
-		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -u, --url       URL to Request\n")
-		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -v, --version   Display version information\n")
+		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -h, --help            Display this Message\n")
+		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -u, --url             URL to Request\n")
+		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -v, --version         Display version information\n")
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -sh, --show-headers   Display version information\n")
+		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -k, --keepalive       Set connection to \"keep-alive\"\n")
 	}
 
 	flag.Parse()

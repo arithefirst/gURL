@@ -11,8 +11,17 @@ import (
 func TestGet(t *testing.T) {
 	// Start testing webserver in a goroutine
 	go func() {
+		// Normal test
 		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 			_, err := fmt.Fprint(w, `{"string":"Testing String","int":69420,"bool":true}`)
+			if err != nil {
+				log.Fatal(err)
+			}
+		})
+
+		// Header test
+		http.HandleFunc("/headers", func(w http.ResponseWriter, r *http.Request) {
+			_, err := fmt.Fprint(w, r.Header.Get("test-header"))
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -26,7 +35,7 @@ func TestGet(t *testing.T) {
 
 	testFlags := Flags{
 		Url:     "http://localhost:8080/",
-		Headers: make(map[string]string),
+		Headers: nil,
 	}
 
 	res, err := Get(&testFlags)
@@ -59,6 +68,19 @@ func TestGet(t *testing.T) {
 		t.Fatal("Regexp crashed with unexpected error: ", err)
 	} else if !matchResponse {
 		t.Error("Test failed: Different response than expected (", resStr, ")")
+	}
+
+	headerTestFlags := Flags{
+		Url:     "http://localhost:8080/headers",
+		Headers: []string{"test-header: gurl-test-header"},
+	}
+
+	headerCheck, err := Get(&headerTestFlags)
+	matchHeader, err := regexp.MatchString(`gurl-test-header`, string(headerCheck))
+	if err != nil {
+		t.Fatal("Regexp crashed with unexpected error: ", err)
+	} else if !matchHeader {
+		t.Error("Test failed: Different header than expected (", resStr, ")")
 	}
 
 }

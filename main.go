@@ -16,7 +16,7 @@ type Flags struct {
 	Version        bool
 	ShowResHeaders bool
 	KeepAlive      bool
-	Headers        map[string]string
+	Headers        []string
 }
 
 // CliFlags Parses CLI Flags
@@ -26,15 +26,24 @@ func CliFlags() Flags {
 	// Short Flags
 	flag.StringVar(&returnFlags.Url, "u", "", "URL to Request")
 	flag.BoolVar(&returnFlags.Version, "v", false, "Display version information")
-	flag.BoolVar(&returnFlags.ShowResHeaders, "sh", false, "Show response headers")
+	flag.BoolVar(&returnFlags.ShowResHeaders, "i", false, "Show response headers")
 	flag.BoolVar(&returnFlags.KeepAlive, "k", false, "Set connection to \"keep-alive\"")
+	// Append each header to the returnFlags.Headers array
+	flag.Func("H", "Add a header to the request", func(val string) error {
+		returnFlags.Headers = append(returnFlags.Headers, val)
+		return nil
+	})
 
 	// Long flags
 	flag.StringVar(&returnFlags.Url, "url", "", "URL to Request")
 	flag.BoolVar(&returnFlags.Version, "version", false, "Display version information")
 	flag.BoolVar(&returnFlags.ShowResHeaders, "show-headers", false, "Show response headers")
 	flag.BoolVar(&returnFlags.KeepAlive, "keepalive", false, "Set connection to \"keep-alive\"")
-	returnFlags.Headers = make(map[string]string)
+	// Append each header to the returnFlags.Headers array
+	flag.Func("header", "Add a header to the request", func(val string) error {
+		returnFlags.Headers = append(returnFlags.Headers, val)
+		return nil
+	})
 
 	// Custom help message for -h/--help
 	flag.Usage = func() {
@@ -42,8 +51,9 @@ func CliFlags() Flags {
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -h, --help            Display this Message\n")
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -u, --url             URL to Request\n")
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -v, --version         Display version information\n")
-		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -sh, --show-headers   Display version information\n")
+		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -i, --show-headers    Display response headers\n")
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -k, --keepalive       Set connection to \"keep-alive\"\n")
+		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -H, --header          Add a header. To add another, use this flag again.\n")
 	}
 
 	flag.Parse()
@@ -51,18 +61,18 @@ func CliFlags() Flags {
 }
 
 // SetupRequest General setup that all request types will use
-func SetupRequest(flags *Flags) (net.Conn, string, error) {
+func SetupRequest(flags *Flags) (Connection net.Conn, Host string, Path string, Error error) {
 	// Parse URL
 	parsedURL, err := url.Parse(flags.Url)
 	if err != nil {
-		return nil, "", err
+		return nil, "", "", err
 	}
 
 	// If the URL was parsed w/o a protocol prepend "http://"
 	if parsedURL.Host == "" {
 		parsedURL, err = url.Parse("http://" + flags.Url)
 		if err != nil {
-			return nil, "", err
+			return nil, "", "", err
 		}
 	}
 
@@ -83,7 +93,7 @@ func SetupRequest(flags *Flags) (net.Conn, string, error) {
 	// Make a TCP Connection
 	conn, err := net.Dial("tcp", host)
 	if err != nil {
-		return nil, "", err
+		return nil, "", "", err
 	}
 
 	// Use TLS if the request is HTTPS
@@ -96,7 +106,7 @@ func SetupRequest(flags *Flags) (net.Conn, string, error) {
 		client = conn
 	}
 
-	return client, host, nil
+	return client, host, parsedURL.Path, nil
 }
 
 func main() {

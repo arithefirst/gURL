@@ -7,7 +7,7 @@ import (
 
 func Get(flags *Flags) ([]byte, error) {
 	// Use SetupRequest() to setup the connection
-	client, host, err := SetupRequest(flags)
+	client, host, path, err := SetupRequest(flags)
 	if err != nil {
 		return nil, err
 	}
@@ -21,11 +21,11 @@ func Get(flags *Flags) ([]byte, error) {
 	// Headers
 	// Connection Close/Keep Alive
 
-	req := "GET / HTTP/1.1\r\n"
+	req := "GET " + path + " HTTP/1.1\r\n"
 	req += fmt.Sprintf("Host: %s\r\n", host)
 
-	for k, v := range flags.Headers {
-		req += fmt.Sprintf("%v: %v\r\n", k, v)
+	for _, v := range flags.Headers {
+		req += fmt.Sprintf("%v\r\n", v)
 	}
 
 	if flags.KeepAlive {

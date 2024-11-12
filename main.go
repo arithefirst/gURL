@@ -17,6 +17,7 @@ type Flags struct {
 	ShowResHeaders bool
 	KeepAlive      bool
 	Headers        []string
+	PostBody       string
 }
 
 // CliFlags Parses CLI Flags
@@ -28,6 +29,7 @@ func CliFlags() Flags {
 	flag.BoolVar(&returnFlags.Version, "v", false, "Display version information")
 	flag.BoolVar(&returnFlags.ShowResHeaders, "i", false, "Show response headers")
 	flag.BoolVar(&returnFlags.KeepAlive, "k", false, "Set connection to \"keep-alive\"")
+	flag.StringVar(&returnFlags.PostBody, "p", "", "Set request type to POST")
 	// Append each header to the returnFlags.Headers array
 	flag.Func("H", "Add a header to the request", func(val string) error {
 		returnFlags.Headers = append(returnFlags.Headers, val)
@@ -39,6 +41,7 @@ func CliFlags() Flags {
 	flag.BoolVar(&returnFlags.Version, "version", false, "Display version information")
 	flag.BoolVar(&returnFlags.ShowResHeaders, "show-headers", false, "Show response headers")
 	flag.BoolVar(&returnFlags.KeepAlive, "keepalive", false, "Set connection to \"keep-alive\"")
+	flag.StringVar(&returnFlags.PostBody, "post", "", "Set request type to POST")
 	// Append each header to the returnFlags.Headers array
 	flag.Func("header", "Add a header to the request", func(val string) error {
 		returnFlags.Headers = append(returnFlags.Headers, val)
@@ -54,6 +57,7 @@ func CliFlags() Flags {
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -i, --show-headers    Display response headers\n")
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -k, --keepalive       Set connection to \"keep-alive\"\n")
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -H, --header          Add a header. To add another, use this flag again.\n")
+		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -p, --post            Sets request type to POST. Pass this flag your request body.")
 	}
 
 	flag.Parse()
@@ -129,8 +133,17 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Pass to Get → get.go
-	res, err := Get(&cliFlags)
+	// Pass to get.go/post.go
+	var res []byte
+	var err error
+
+	// Send to get.go if post body not empty
+	if cliFlags.PostBody == "" {
+		res, err = Get(&cliFlags)
+	} else {
+		res, err = Post(&cliFlags)
+	}
+
 	if err != nil {
 		log.Fatalf("Error: %s", err.Error())
 	}

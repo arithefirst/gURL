@@ -15,6 +15,7 @@ type Flags struct {
 	Url            string
 	Version        bool
 	ShowResHeaders bool
+	Head           bool
 	KeepAlive      bool
 	Headers        []string
 	PostBody       string
@@ -30,6 +31,7 @@ func CliFlags() Flags {
 	flag.BoolVar(&returnFlags.ShowResHeaders, "i", false, "Show response headers")
 	flag.BoolVar(&returnFlags.KeepAlive, "k", false, "Set connection to \"keep-alive\"")
 	flag.StringVar(&returnFlags.PostBody, "p", "", "Set request type to POST")
+	flag.BoolVar(&returnFlags.Head, "he", false, "Set request type to HEAD")
 	// Append each header to the returnFlags.Headers array
 	flag.Func("H", "Add a header to the request", func(val string) error {
 		returnFlags.Headers = append(returnFlags.Headers, val)
@@ -42,6 +44,7 @@ func CliFlags() Flags {
 	flag.BoolVar(&returnFlags.ShowResHeaders, "show-headers", false, "Show response headers")
 	flag.BoolVar(&returnFlags.KeepAlive, "keepalive", false, "Set connection to \"keep-alive\"")
 	flag.StringVar(&returnFlags.PostBody, "post", "", "Set request type to POST")
+	flag.BoolVar(&returnFlags.Head, "head", false, "Set request type to HEAD")
 	// Append each header to the returnFlags.Headers array
 	flag.Func("header", "Add a header to the request", func(val string) error {
 		returnFlags.Headers = append(returnFlags.Headers, val)
@@ -57,7 +60,8 @@ func CliFlags() Flags {
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -i, --show-headers    Display response headers\n")
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -k, --keepalive       Set connection to \"keep-alive\"\n")
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -H, --header          Add a header. To add another, use this flag again.\n")
-		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -p, --post            Sets request type to POST. Pass this flag your request body.")
+		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -p, --post            Sets request type to POST. Pass this flag your request body.\n")
+		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "  -he, --head           Sets request type to HEAD\n")
 	}
 
 	flag.Parse()
@@ -139,7 +143,11 @@ func main() {
 
 	// Send to get.go if post body not empty
 	if cliFlags.PostBody == "" {
-		res, err = Get(&cliFlags)
+		if cliFlags.Head {
+			res, err = Head(&cliFlags)
+		} else {
+			res, err = Get(&cliFlags)
+		}
 	} else {
 		res, err = Post(&cliFlags)
 	}
@@ -148,7 +156,7 @@ func main() {
 		log.Fatalf("Error: %s", err.Error())
 	}
 
-	if !cliFlags.ShowResHeaders {
+	if !cliFlags.ShowResHeaders && !cliFlags.Head {
 		// Print the response w/o headers
 		resStr := string(res)
 		fmt.Print(resStr[strings.Index(resStr, "\r\n\r\n")+4:])
